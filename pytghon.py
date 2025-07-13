@@ -6,7 +6,7 @@ import yfinance as yf
 def get_spot_data(ticker):
     df = yf.download(ticker, period="1d", interval="5m")
     if df.empty:
-        return None, None
+        return None, (None, None)
     current = df['Close'].iloc[-1]
     day_high = df['High'].max()
     day_low = df['Low'].min()
@@ -28,17 +28,15 @@ symbol = index_map[selected_index]
 # Get live data
 price, (day_high, day_low) = get_spot_data(symbol)
 
-if price is None:
-    st.error("⚠️ Could not fetch live data. Try again later.")
-    st.stop()
-
 try:
-    st.metric(f"📈 {selected_index} Spot", f"{float(price):.2f}")
-    st.markdown(f"**High:** {float(day_high):.2f}  **Low:** {float(day_low):.2f}")
-except:
-    st.error("⚠️ Error in formatting live price values. Data might be incomplete or delayed.")
+    price = float(price)
+    day_high = float(day_high)
+    day_low = float(day_low)
+except (TypeError, ValueError):
+    st.error("⚠️ Invalid data received. Data might be unavailable or corrupted.")
     st.stop()
 
+st.metric(f"📈 {selected_index} Spot", f"{price:.2f}")
 st.markdown(f"**High:** {day_high:.2f}  **Low:** {day_low:.2f}")
 
 # Strategy logic
