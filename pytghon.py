@@ -14,12 +14,13 @@ def get_spot_data(ticker):
 
 # Setup
 st.set_page_config("📊 Live Option Signal Dashboard", layout="wide")
-st.title("📊 Live Option Signal Dashboard: Nifty & Bank Nifty")
+st.title("📊 Live Option Signal Dashboard: Nifty, Bank Nifty & Sensex")
 
 # Index configs
 index_map = {
     "NIFTY": "^NSEI",
     "BANKNIFTY": "^NSEBANK",
+    "SENSEX": "^BSESN"
 }
 
 selected_index = st.selectbox("Select Index", list(index_map.keys()))
@@ -38,6 +39,18 @@ except (TypeError, ValueError):
 
 st.metric(f"📈 {selected_index} Spot", f"{price:.2f}")
 st.markdown(f"**High:** {day_high:.2f}  **Low:** {day_low:.2f}")
+
+# Support and Resistance Display
+support1 = day_low
+resistance1 = day_high
+support2 = support1 - (resistance1 - support1) * 0.5
+resistance2 = resistance1 + (resistance1 - support1) * 0.5
+
+st.subheader("📌 Support & Resistance Levels")
+st.markdown(f"- **Resistance 2:** {resistance2:.2f}")
+st.markdown(f"- **Resistance 1 (Day High):** {resistance1:.2f}")
+st.markdown(f"- **Support 1 (Day Low):** {support1:.2f}")
+st.markdown(f"- **Support 2:** {support2:.2f}")
 
 # Strategy logic (dynamic strikes based on ATM)
 atm_strike = round(price / 50) * 50 if "NIFTY" in selected_index else round(price / 100) * 100
