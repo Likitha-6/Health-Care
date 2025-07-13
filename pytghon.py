@@ -53,6 +53,13 @@ with col1:
     st.write(f"**Buy** {sell_ce + 100} CE (Hedge)")
     st.write("Target: ₹20–30 Net Credit")
     st.write("Exit if Index crosses resistance or CE doubles")
+    if datetime.datetime.now().time() >= datetime.time(13, 0):
+        if price < day_high:
+            st.success("✅ Favorable zone for Bearish Setup (price near resistance)")
+        else:
+            st.warning("⚠️ Price near breakout — avoid bearish setup")
+    else:
+        st.info("ℹ️ Wait until 1 PM for bearish setup checks")
 
 with col2:
     st.markdown("### 🔻 Bullish Setup")
@@ -60,6 +67,13 @@ with col2:
     st.write(f"**Buy** {sell_pe - 100} PE (Hedge)")
     st.write("Target: ₹20–30 Net Credit")
     st.write("Exit if Index breaks down or PE doubles")
+    if datetime.datetime.now().time() >= datetime.time(13, 0):
+        if price > day_low:
+            st.success("✅ Favorable zone for Bullish Setup (price near support)")
+        else:
+            st.warning("⚠️ Price near breakdown — avoid bullish setup")
+    else:
+        st.info("ℹ️ Wait until 1 PM for bullish setup checks")
 
 # Breakout logic
 st.subheader("📊 Breakout Watch")
