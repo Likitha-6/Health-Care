@@ -28,7 +28,7 @@ symbol = index_map[selected_index]
 # Get live data
 price, (day_high, day_low) = get_spot_data(symbol)
 
-if not price:
+if price is None:
     st.error("⚠️ Could not fetch live data. Try again later.")
     st.stop()
 
