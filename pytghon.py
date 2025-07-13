@@ -1,35 +1,73 @@
 import streamlit as st
-import pandas as pd
-import joblib
-import numpy as np
+import datetime
+import yfinance as yf
 
-# Load model and features
-model = joblib.load("readmission_model.pkl")
-features = joblib.load("model_features.pkl")
+# Utility to get current spot and basic level logic
+def get_spot_data(ticker):
+    df = yf.download(ticker, period="1d", interval="5m")
+    if df.empty:
+        return None, None
+    current = df['Close'].iloc[-1]
+    day_high = df['High'].max()
+    day_low = df['Low'].min()
+    return current, (day_high, day_low)
 
-st.set_page_config(page_title="Hospital Readmission Predictor", page_icon="🏥")
-st.title("🏥 Hospital Readmission Risk Predictor")
-st.markdown("---")
+# Setup
+st.set_page_config("📊 Live Option Signal Dashboard", layout="wide")
+st.title("📊 Live Option Signal Dashboard: Nifty & Bank Nifty")
 
-st.markdown("Enter patient details to predict the risk of 30-day readmission.")
+# Index configs
+index_map = {
+    "NIFTY": "^NSEI",
+    "BANKNIFTY": "^NSEBANK",
+}
 
-# Build a dynamic input form
-input_data = {}
+selected_index = st.selectbox("Select Index", list(index_map.keys()))
+symbol = index_map[selected_index]
 
-for col in features:
-    if 'num' in col or 'days' in col or 'time' in col or 'visits' in col:
-        input_data[col] = st.number_input(f"{col}", min_value=0, value=1)
+# Get live data
+price, (day_high, day_low) = get_spot_data(symbol)
+
+if not price:
+    st.error("⚠️ Could not fetch live data. Try again later.")
+    st.stop()
+
+st.metric(f"📈 {selected_index} Spot", f"{price:.2f}")
+st.markdown(f"**High:** {day_high:.2f}  **Low:** {day_low:.2f}")
+
+# Strategy logic
+atm_strike = round(price / 50) * 50 if "NIFTY" in selected_index else round(price / 100) * 100
+sell_ce = atm_strike + 100
+sell_pe = atm_strike - 100
+
+st.subheader("🔔 Suggested Option Strategy")
+col1, col2 = st.columns(2)
+
+with col1:
+    st.markdown("### ⛳ Bearish Setup")
+    st.write(f"**Sell** {sell_ce} CE")
+    st.write(f"**Buy** {sell_ce + 100} CE (Hedge)")
+    st.write("Target: ₹20–30 Net Credit")
+    st.write("Exit if Index crosses resistance or CE doubles")
+
+with col2:
+    st.markdown("### 🔻 Bullish Setup")
+    st.write(f"**Sell** {sell_pe} PE")
+    st.write(f"**Buy** {sell_pe - 100} PE (Hedge)")
+    st.write("Target: ₹20–30 Net Credit")
+    st.write("Exit if Index breaks down or PE doubles")
+
+# Breakout logic
+st.subheader("📊 Breakout Watch")
+now = datetime.datetime.now().time()
+if now >= datetime.time(13, 0):
+    if price > day_high:
+        st.success("🚀 Breakout UP! Consider Call Buy or Bull Spread")
+    elif price < day_low:
+        st.error("📉 Breakdown! Consider Put Buy or Bear Spread")
     else:
-        input_data[col] = st.selectbox(f"{col}", options=[0, 1])
+        st.info("No breakout yet. Monitoring post 1 PM...")
+else:
+    st.warning("Waiting for 1 PM to activate breakout monitoring...")
 
-# Predict button
-if st.button("Predict Readmission"):
-    input_df = pd.DataFrame([input_data])
-    prediction = model.predict(input_df)[0]
-    probability = model.predict_proba(input_df)[0][1]
-
-    st.markdown("---")
-    if prediction == 1:
-        st.error(f"⚠️ High risk of readmission within 30 days. Probability: {probability:.2f}")
-    else:
-        st.success(f"✅ Low risk of readmission. Probability: {probability:.2f}")
+st.caption("📌 Auto-suggests ATM-based spreads. Prices shown are indicative. Use with live option chain data.")
