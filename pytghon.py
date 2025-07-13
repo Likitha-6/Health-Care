@@ -32,7 +32,13 @@ if price is None:
     st.error("⚠️ Could not fetch live data. Try again later.")
     st.stop()
 
-st.metric(f"📈 {selected_index} Spot", f"{price:.2f}")
+try:
+    st.metric(f"📈 {selected_index} Spot", f"{float(price):.2f}")
+    st.markdown(f"**High:** {float(day_high):.2f}  **Low:** {float(day_low):.2f}")
+except:
+    st.error("⚠️ Error in formatting live price values. Data might be incomplete or delayed.")
+    st.stop()
+
 st.markdown(f"**High:** {day_high:.2f}  **Low:** {day_low:.2f}")
 
 # Strategy logic
