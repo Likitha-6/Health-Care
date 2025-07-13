@@ -39,46 +39,50 @@ except (TypeError, ValueError):
 st.metric(f"📈 {selected_index} Spot", f"{price:.2f}")
 st.markdown(f"**High:** {day_high:.2f}  **Low:** {day_low:.2f}")
 
-# Strategy logic
+# Strategy logic (dynamic strikes based on ATM)
 atm_strike = round(price / 50) * 50 if "NIFTY" in selected_index else round(price / 100) * 100
-sell_ce = atm_strike + 100
-sell_pe = atm_strike - 100
+bearish_sell = atm_strike + 100
+bearish_buy = atm_strike + 200
+bullish_sell = atm_strike - 100
+bullish_buy = atm_strike - 200
+
+midpoint = (day_high + day_low) / 2
+current_time = datetime.datetime.now().time()
 
 st.subheader("🔔 Suggested Option Strategy")
 col1, col2 = st.columns(2)
 
 with col1:
     st.markdown("### ⛳ Bearish Setup")
-    st.write(f"**Sell** {sell_ce} CE")
-    st.write(f"**Buy** {sell_ce + 100} CE (Hedge)")
+    st.write(f"**Sell** {bearish_sell} CE")
+    st.write(f"**Buy** {bearish_buy} CE (Hedge)")
     st.write("Target: ₹20–30 Net Credit")
     st.write("Exit if Index crosses resistance or CE doubles")
-    if datetime.datetime.now().time() >= datetime.time(13, 0):
-        if price < day_high:
-            st.success("✅ Favorable zone for Bearish Setup (price near resistance)")
+    if current_time >= datetime.time(13, 0):
+        if price > midpoint:
+            st.success("✅ Favorable zone for Bearish Setup (price closer to resistance)")
         else:
-            st.warning("⚠️ Price near breakout — avoid bearish setup")
+            st.warning("⚠️ Price not near resistance — bearish setup not ideal")
     else:
         st.info("ℹ️ Wait until 1 PM for bearish setup checks")
 
 with col2:
     st.markdown("### 🔻 Bullish Setup")
-    st.write(f"**Sell** {sell_pe} PE")
-    st.write(f"**Buy** {sell_pe - 100} PE (Hedge)")
+    st.write(f"**Sell** {bullish_sell} PE")
+    st.write(f"**Buy** {bullish_buy} PE (Hedge)")
     st.write("Target: ₹20–30 Net Credit")
     st.write("Exit if Index breaks down or PE doubles")
-    if datetime.datetime.now().time() >= datetime.time(13, 0):
-        if price > day_low:
-            st.success("✅ Favorable zone for Bullish Setup (price near support)")
+    if current_time >= datetime.time(13, 0):
+        if price < midpoint:
+            st.success("✅ Favorable zone for Bullish Setup (price closer to support)")
         else:
-            st.warning("⚠️ Price near breakdown — avoid bullish setup")
+            st.warning("⚠️ Price not near support — bullish setup not ideal")
     else:
         st.info("ℹ️ Wait until 1 PM for bullish setup checks")
 
 # Breakout logic
 st.subheader("📊 Breakout Watch")
-now = datetime.datetime.now().time()
-if now >= datetime.time(13, 0):
+if current_time >= datetime.time(13, 0):
     if price > day_high:
         st.success("🚀 Breakout UP! Consider Call Buy or Bull Spread")
     elif price < day_low:
