@@ -113,8 +113,8 @@ import yfinance as yf
 import pandas as pd
 import datetime
 
-st.set_page_config("📈 BTST Screener", layout="wide")
-st.title("📈 BTST Screener for Indices (Live After 3 PM)")
+#st.set_page_config("📈 BTST Screener", layout="wide")
+#st.title("📈 BTST Screener for Indices (Live After 3 PM)")
 
 # List of watchlist indices
 indices = {
