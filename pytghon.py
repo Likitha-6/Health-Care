@@ -106,3 +106,73 @@ else:
     st.warning("Waiting for 1 PM to activate breakout monitoring...")
 
 st.caption("📌 Auto-suggests ATM-based spreads. Prices shown are indicative. Use with live option chain data.")
+
+
+import streamlit as st
+import yfinance as yf
+import pandas as pd
+import datetime
+
+st.set_page_config("📈 BTST Screener", layout="wide")
+st.title("📈 BTST Screener for Indices (Live After 3 PM)")
+
+# List of watchlist indices
+indices = {
+    "NIFTY 50": "^NSEI",
+    "BANK NIFTY": "^NSEBANK",
+    "SENSEX": "^BSESN"
+}
+
+# Time check
+time_now = datetime.datetime.now().time()
+after_3pm = time_now >= datetime.time(15, 0)
+
+# Helper function to fetch intraday data
+def fetch_index_data(symbol):
+    data = yf.download(symbol, period="1d", interval="5m")
+    return data
+
+results = []
+
+for name, symbol in indices.items():
+    try:
+        df = fetch_index_data(symbol)
+        if df.empty:
+            continue
+
+        latest = df.iloc[-1]
+        day_high = df['High'].max()
+        day_low = df['Low'].min()
+        close_price = latest['Close']
+        volume = latest['Volume'] if 'Volume' in df.columns else 0
+
+        # Trend direction check
+        if close_price > day_high * 0.995:  # Near breakout
+            signal = "🔼 Possible BTST Long"
+        elif close_price < day_low * 1.005:  # Near breakdown
+            signal = "🔽 Possible BTST Short"
+        else:
+            signal = "⏳ No clear setup"
+
+        results.append({
+            "Index": name,
+            "Close": round(close_price, 2),
+            "Day High": round(day_high, 2),
+            "Day Low": round(day_low, 2),
+            "Volume": int(volume),
+            "Signal": signal
+        })
+
+    except Exception as e:
+        st.error(f"Error fetching {name}: {e}")
+
+# Display results
+if after_3pm:
+    if results:
+        df_result = pd.DataFrame(results)
+        st.dataframe(df_result)
+    else:
+        st.warning("No data or signals detected from selected indices.")
+else:
+    st.info("⏳ Waiting for 3:00 PM... Screener will activate then.")
+
