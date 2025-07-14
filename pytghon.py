@@ -114,7 +114,7 @@ import pandas as pd
 import datetime
 
 #st.set_page_config("📈 BTST Screener", layout="wide")
-#st.title("📈 BTST Screener for Indices (Live After 3 PM)")
+st.title("📈 BTST Screener for Indices (Live After 3 PM)")
 
 # List of watchlist indices
 indices = {
@@ -137,7 +137,7 @@ results = []
 for name, symbol in indices.items():
     try:
         df = fetch_index_data(symbol)
-        if df.empty:
+        if df.empty or df.shape[0] < 2:
             continue
 
         latest = df.iloc[-1]
@@ -147,9 +147,9 @@ for name, symbol in indices.items():
         volume = latest['Volume'] if 'Volume' in df.columns else 0
 
         # Trend direction check
-        if close_price > day_high * 0.995:  # Near breakout
+        if pd.notna(close_price) and pd.notna(day_high) and (close_price > (0.995 * day_high)):
             signal = "🔼 Possible BTST Long"
-        elif close_price < day_low * 1.005:  # Near breakdown
+        elif pd.notna(close_price) and pd.notna(day_low) and (close_price < (1.005 * day_low)):
             signal = "🔽 Possible BTST Short"
         else:
             signal = "⏳ No clear setup"
@@ -175,4 +175,5 @@ if after_3pm:
         st.warning("No data or signals detected from selected indices.")
 else:
     st.info("⏳ Waiting for 3:00 PM... Screener will activate then.")
+
 
